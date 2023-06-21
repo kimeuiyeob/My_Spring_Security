@@ -1,0 +1,16 @@
+package com.cos.blog.model;
+
+import java.sql.Timestamp;
+
+import javax.persistence.Entity;
+
+@Entity //아래 필드값을 읽어서 자동으로 테이블 생성
+public class User {
+
+	private int id;
+	private String userId;
+	private String passWord;
+	private String email;
+	private Timestamp createDate;
+
+}

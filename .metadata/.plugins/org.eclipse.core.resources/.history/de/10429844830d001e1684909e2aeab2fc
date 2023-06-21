@@ -1,0 +1,6 @@
+package com.cos.blog.model.copy;
+
+//enum => 도메인을 넣을때 값을 강제로 필드값안에서만 고르게 할수있다.
+public enum RoleType {
+	USER,ADMIN
+}

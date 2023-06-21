@@ -1,0 +1,32 @@
+package com.cos.blog.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+//아래 3개의 어노테이션은 시큐리티 기본 설정이다.
+@Configuration // 빈 등록 (IOC)
+@EnableWebSecurity // 시큐리티 필터 추가 => 설정을 아래서 한다.
+@EnableGlobalMethodSecurity(prePostEnabled = true) // 특정 주소로 접근을 하면 권한 및 인증을 미리 체크하겠다.
+public class SecurityConfig {
+
+	@Bean // IOC에 관리 받는다.
+	public BCryptPasswordEncoder encodePW() {
+		return new BCryptPasswordEncoder(); // 시큐리티의 내장 함수
+	}
+
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		// "/auth/**" 이런주소로 들어오면 permitAll() 요청을 전부 허용하고 .anyRequest() 아닌 다른 주소들은
+		// .authenticated() 인증이 필요하다. .loginPage("/auth/loginForm"); 인증이 필요한 주소를 요청하면
+		// 로그인 화면으로 보낸다.
+		http.authorizeHttpRequests().antMatchers("/auth/**","/js/**","/css/**","/image/**").permitAll().anyRequest().authenticated().and().formLogin()
+				.loginPage("/auth/loginForm");
+		return http.build();
+
+	}
+}

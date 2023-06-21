@@ -1,0 +1,38 @@
+server:
+  port: 8000
+  servlet:
+    context-path: /blog
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/views/ #경로를 설정하여 jsp의 파일을 찾아가게 한다.
+      suffix: .jsp 
+      
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/blog?serverTimezone=Asia/Seoul
+    username: cos
+    password: cos1234
+    
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: create #처음에만 생성으로 설정을 하고 테이블을 다 생성하면 update로 바꾼다.
+#      ddl-auto: update
+#      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl #필드이름이랑 DB컬럼이름이랑 동일하게 생성한다.
+#        physical-strategy: org.hibernate.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy #카멜 표기법을 DB컬럼은 _바로 생성한다.
+      use-new-id-generator-mappings: false #jpa의 넘버링 전략을 따라가지 않는다.
+    show-sql: true #콘솔창에 SQL명령어가 보인다.
+    properties:
+      hibernate.format_sql: true  #SQL명령어가 정돈되어서 나온다.
+
+  jackson:
+    serialization:
+      fail-on-empty-beans: false

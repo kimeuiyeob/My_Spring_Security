@@ -1,0 +1,9 @@
+package com.cos.blog.config.auth;
+
+import com.cos.blog.model.User;
+
+public class PrincipalDetail {
+
+	private User user; // 객체를 품고있는거 -> 콤포지션
+
+}

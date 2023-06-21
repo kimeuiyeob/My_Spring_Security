@@ -1,0 +1,96 @@
+package com.cos.blog.test;
+
+import java.util.List;
+import java.util.function.Supplier;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cos.blog.model.RoleType;
+import com.cos.blog.model.User;
+import com.cos.blog.repository.UserRepository;
+
+//html파일을 리턴 -> Controller
+//data를 리턴 -> RestController
+@RestController
+public class DummyControllerTest {
+
+	// DummyControllerTest클래스가 메모리에 뜰때 UserRepository도 띄어준다.
+	// 이미 repository는 Bean으로 주입되었기때문에 바로 사용하면 된다. => 의존성 주입 (DI)
+	@Autowired
+	private UserRepository userRepository;
+
+//	======================================================
+	// 값 넣기
+	@PostMapping("/dummy/join")
+	public String join(User user) {
+		// messageConverter가 requestBody에 담겨있는 키값이랑 해당 객체의
+		// 필드값이랑 동일하면 자동 매핑을 시켜서 해당 값을 받을수 있다.
+		user.setRole(RoleType.USER); // <= enum을 활용하여 오타방지와 확실한 타입을 셋해줄수있다.
+
+		userRepository.save(user);
+		return "회원 가입 완료";
+	}
+
+//	======================================================
+	// 전체 조회
+	@GetMapping("/dummy/user")
+	public List<User> sellectAll() {
+		List<User> listUser = userRepository.findAll();
+		return listUser;
+	}
+//	======================================================
+	// 페이지 전체 조회
+	@GetMapping("/dummy/user/page")
+	public List<User> pageList(@PageableDefault(size=2,sort="id",direction=Sort.Direction.DESC) Pageable pageable) {
+		Pageable page = userRepository.findAll(pageable);
+		
+		return null;
+	}
+
+//	======================================================
+	// 한명 조회
+	@GetMapping("/dummy/user/{id}") // url { } 이렇게 값을 받는거는 @PathVariable이다.
+	public User sellectOne(@PathVariable int id) {
+
+		// 리턴타입이 Optional인 이유!
+		// 해당 아이디값이 DB에 없어서 못찾아오게되면 user가 null이 될거 아냐?
+		// 그럼 return 이 null일텐데 그럼 프로그램이 문제가 생길수 있잖아...
+		// Optional로 너의 User객체를 감싸서 가져올테니 null인지 아닌지 판단해서 return해!
+
+//		User user = userRepository.findById(id).get(); //.get()은 null일수가 없으니까 Optional타입을 풀어버릴꺼야! <= 위험할수있다.
+
+		// 만약 findById가 null 일시에는 유저 빈객체를 return한다.
+//		User user = userRepository.findById(id).orElseGet(new Supplier<User>() {
+//			@Override
+//			public User get() {
+//				return new User();
+//			}
+//		});
+
+		// 만약 해당 id가 없을시에는 IllegalArgumentException에러를 발생시키고 아래문구를 출력한다.
+		// 그래서 AOP로 해당 에러가 발생하면 해당 에러페이지로 보내 처리할수 있다.
+		User user = userRepository.findById(id).orElseThrow(new Supplier<IllegalArgumentException>() {
+			@Override
+			public IllegalArgumentException get() {
+				return new IllegalArgumentException("해당 유저는 없습니다. id : " + id);
+			}
+		});
+
+		// 람다식 활용
+//		User user = userRepository.findById(id).orElseThrow(() -> {
+//				return new IllegalArgumentException("해당 유저는 없습니다. id : " + id);
+//		});
+
+		// 변환 (웹브라우저 이해할수 있는 데이터) -> Json (Gson 라이브러리로 변환 가능)
+		// 하지만 스프링 부트 -> messageConverter가 응답시에는 자동으로 자바 객체를
+		// Jackson 라이브러리를 호출해서 json으로 변환하여 브라우저에게 던져준다.
+		return user;
+	}
+}
