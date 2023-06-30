@@ -2,14 +2,16 @@ package com.cos.blog.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cos.blog.config.SecurityConfig;
 import com.cos.blog.dto.ResponseDto;
-import com.cos.blog.model.RoleType;
 import com.cos.blog.model.User;
 import com.cos.blog.service.UserService;
 
@@ -18,6 +20,9 @@ public class UserApiController {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
 	// 세션 객체를 여기서 주입시켜서 가져올수도 있고 파라미터로 받을수도 있다.
 //	@Autowired
@@ -34,6 +39,23 @@ public class UserApiController {
 	}
 
 	// =====================================================
+	// 회원 수정
+	@PutMapping("/user/update")
+	public ResponseDto<Integer> update(@RequestBody User user) {
+		userService.update(user);
+		// 여기서는 트랜잭션이 종료되어서 DB의 값은 변경되었지만
+		// 화면에 출력된 정보는 변경되지 않은 이유는 세션값이 변경되지 않았기 때문이다. 로그아웃을 하고 다시들어가면 변경됬었다.
+		// 여기서 세션값도 같이 변경해줄거다!!
+
+		// 세션 등록!!
+		Authentication authentication = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		return new ResponseDto<>(HttpStatus.OK.value(), 1);
+	}
+
+	// =====================================================
 	// 로그인
 //	@PostMapping("/api/user/login")
 //	public ResponseDto<Integer> login(@RequestBody User user, HttpSession session) {
@@ -45,6 +67,5 @@ public class UserApiController {
 //		}
 //		return new ResponseDto<Integer>(HttpStatus.OK.value(), 1);
 //	}
-
 	// =====================================================
 }

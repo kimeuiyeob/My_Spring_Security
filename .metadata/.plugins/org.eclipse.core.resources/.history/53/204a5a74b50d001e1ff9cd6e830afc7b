@@ -1,9 +1,0 @@
-package com.cos.blog.service;
-
-import org.springframework.stereotype.Service;
-
-//스프링이 컴포넌트 스캔을 통해서 Bean에 등록을 한다.
-@Service
-public class UserService {
-
-}

@@ -1,0 +1,34 @@
+package com.cos.blog.model;
+
+import lombok.Data;
+
+@Data
+public class KakaoProfile {
+	private Long id;
+	private String connected_at;
+	private Properties properties;
+	private KakaoAccount kakao_account;
+
+	@Data
+	public class KakaoAccount {
+		private Boolean profileNicknameNeedsAgreement;
+		private Profile profile;
+		private Boolean hasEmail;
+		private Boolean emailNeedsAgreement;
+		private Boolean isEmailValid;
+		private Boolean isEmailVerified;
+		private String email;
+	}
+
+	@Data
+	public class Profile {
+		private String nickname;
+	}
+
+	@Data
+	public class Properties {
+		private String nickname;
+
+	}
+
+}

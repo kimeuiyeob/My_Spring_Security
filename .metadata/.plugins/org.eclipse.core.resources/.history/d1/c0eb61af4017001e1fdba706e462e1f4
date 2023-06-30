@@ -1,0 +1,112 @@
+let index = {
+
+	init: function() {
+		$("#btn-save").on("click", () => { //글 저장
+			this.save();
+		});
+		$("#btn-update").on("click", () => { //글 수정
+			this.update();
+		});
+		$("#btn-delete").on("click", () => { //글 삭제
+			this.deleteId();
+		});
+		$("#btn-reply-save").on("click", () => { //댓글 등록
+			this.replySave();
+		});
+	},
+
+	//===========================================================
+	//글 저장
+	save: function() {
+		let data = {
+			title: $("#Title").val(),
+			content: $("#summernote").val()
+		};
+
+		$.ajax({
+			type: "post",
+			url: "/api/board",
+			data: JSON.stringify(data),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+		}).done(function(resp) {
+			alert("글쓰기 완료되었습니다.");
+			location.href = "/";
+		}).fail(function(error) {
+			alert("글쓰기 실패하였습니다.");
+			alert(JSON.stringify(error));
+		});
+	},
+
+	//===========================================================
+	//글 수정
+	update: function() {
+
+		let id = $("#id").val();
+
+		let data = {
+			title: $("#Title").val(),
+			content: $("#summernote").val()
+		};
+		$.ajax({
+			type: "put",
+			url: "/api/board/" + id,
+			data: JSON.stringify(data),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+		}).done(function(resp) {
+			alert("글수정 완료되었습니다.");
+			location.href = "/";
+		}).fail(function(error) {
+			alert("글수정 실패하였습니다.");
+			alert(JSON.stringify(error));
+		});
+	},
+
+	//===========================================================
+	//글 삭제
+	deleteId: function() {
+		var id = $("#id").text();
+
+		$.ajax({
+			type: "delete",
+			url: "/api/board/" + id,
+		}).done(function(resp) {
+			alert("삭제가 완료되었습니다.");
+			location.href = "/";
+		}).fail(function(error) {
+			alert("삭제가 실패하였습니다.");
+			alert(JSON.stringify(error));
+		});
+	},
+	
+	//===========================================================
+	//댓글 입력
+	replySave: function() {
+		
+		let userID = $("#id").val();
+		let boardId = $("#id").text();
+		let content = $("#reply-content").val();
+
+		let data = {
+			content: content
+		};
+		
+		$.ajax({
+			type: "post",
+			url: "/api/board/" + id + "/reply",
+			data: JSON.stringify(data),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+		}).done(function(resp) {
+			alert("댓글 입력 완료되었습니다.");
+			location.href = "/board/" + id;
+		}).fail(function(error) {
+			alert("댓글 입력 실패하였습니다.");
+			alert(JSON.stringify(error));
+		});
+	},
+
+}
+
+index.init();

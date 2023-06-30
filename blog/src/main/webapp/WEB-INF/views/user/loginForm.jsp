@@ -23,12 +23,17 @@
 			</div>
 
 			<button id="btn-login" class="btn btn-primary">로그인</button>
+			
+			<!-- ========================== 카카오 Open Auth (대신 인증) Oauth 사용  ========================== -->
+			<!-- 순서! 카카오개발자센터 로그인 -> 내 에플리케이션 생성 -> RestApi키 저장 -> 플랫폼설정 redirect url 설정 -> 카카오톡 로그인 활성화 -> 동의항목 설정 -> 문서 (카카오 로그인 rest Api) -> 요청 url 복사 -->
+			<!-- https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI} -->
+			<a href="https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=b3dccf45d727c9e88401dedd266d5e08&redirect_uri=http://localhost:8000/auth/kakao/callback"><img
+				src="/image/kakao_button.png" style="height: 40px"></a>
 
 		</form>
 
 	</div>
 
-	<%-- <script src="/js/user.js"></script> --%>
 	<%@ include file="../layout/footer.jsp"%>
 
 </body>

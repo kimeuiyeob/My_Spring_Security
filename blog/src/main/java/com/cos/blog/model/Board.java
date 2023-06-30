@@ -13,9 +13,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,6 +52,11 @@ public class Board {
 	
 	@OneToMany(mappedBy = "board", fetch = FetchType.EAGER) //mappedBy -> 연관관계의 주인이 아니다. (DB 컬럼 생성 X)
 	//즉 board를 sellect할때 join문을 통해서 reply 값을 가져오기 위함이다.
+	@JsonIgnoreProperties({"board"}) //<= board를 무시한다
+	//EAGER전략은 해당 board를 조회할때 reply의 값까지 다 가져오는건데 reply안에는 또 Eager전략으로 board가있다.
+	//이렇게 되면 서로 무한참조를 해서 값을 계속 가져오는 문제가 발생해서 @JsonIgnoreProperties({"board"}) 어노테이션으로
+	//reply를 가져올때 안에있는 board값은 빼고 가져오게 하면서 무한참조를 막는것이다.
+	@OrderBy("id desc")
 	private List<Reply> reply;
 
 	@CreationTimestamp // 데이터가 추가 또는 수정될때 자동으로 시간이 들어간다.

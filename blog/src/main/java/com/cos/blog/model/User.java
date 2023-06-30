@@ -34,7 +34,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY) // DB의 넘버링 전략을 따라간다.
 	private int id;
 
-	@Column(nullable = false, length = 30, unique = true) // null이 들어가면 안되고 길이를 30이상 넘기지 못하게 한다, 중복 X
+	@Column(nullable = false, length = 100, unique = true) // null이 들어가면 안되고 길이를 30이상 넘기지 못하게 한다, 중복 X
 	private String username;
 
 	@Column(nullable = false, length = 100) // 비밀번호의 길이를 크게준 이유는 암호화된 비밀번호를 DB에 저장시키기 때문이다.
@@ -46,6 +46,8 @@ public class User {
 //	@ColumnDefault("'user'") //기본 설정을 user로 할수 있지만 enum을 활용해보자
 	@Enumerated(EnumType.STRING) // RoleType이라는 컬럼속성값은 없으니까 String이라고 알려주면 DB에 varchar로 들어간다.
 	private RoleType role; // 역할 -> enum을 사용하는게 좋다(오타방지 및 도메인 설정) ex) admin, user, manager 등등
+
+	private String oauth; // 오어스 상태 필드 -> 만약 카카오로그인시 kakao, 구글 로그인시 google
 
 	@CreationTimestamp // 자바에서 현재시간을 자동으로 넣어준다.
 	private Timestamp createDate;

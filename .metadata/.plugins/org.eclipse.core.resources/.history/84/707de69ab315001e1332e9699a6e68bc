@@ -1,0 +1,150 @@
+package com.cos.blog.controller;
+
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+
+import com.cos.blog.model.KakaoProfile;
+import com.cos.blog.model.OAuthToken;
+import com.cos.blog.model.User;
+import com.cos.blog.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+//인증이 안된 사용자들이 출입할수 있는 경로를 /auth 허용
+//그냥 주소가 / 이면 index.jsp 허용
+//static 이하에 있는 폴더들은 허용 ex) js, css 등등
+
+@Controller
+public class UserController {
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	// yml파일에 만든 키
+	@Value("${cos.key}")
+	private String cosKey;
+
+	// 회원가입
+	@GetMapping("/auth/joinForm")
+	public String joinForm() {
+		return "user/joinForm";
+	}
+
+	// 로그인
+	@GetMapping("/auth/loginForm")
+	public String loginForm() {
+		return "user/loginForm";
+	}
+
+	// 회원정보
+	@GetMapping("/user/updateForm")
+	public String updateForm() {
+		return "user/updateForm";
+	}
+
+	// ================ 카카오톡 오어스 로그인 =================
+
+	@GetMapping("/auth/kakao/callback")
+	// @ResponseBody 데이터를 리턴해주는 컨트롤러 함수
+	public @ResponseBody String kakaoCallback(String code) { // 쿼리스트링 키값으로 code를 받아서 바로 매핑이 가능하다.
+
+		// 코드값을 받은순간 인증은 완료된거다.
+		// 이제 코드로 accesstoken을 받고 accesstoken으로 카카오src서버에서 나의 정보를 가져와야한다.
+
+		// Post방식으로 key=value 데이터 요청 (카카오톡쪽으로)
+		RestTemplate rt = new RestTemplate(); // HttpHeader 객체 생성
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		params.add("grant_type", "authorization_code");
+		params.add("client_id", "b3dccf45d727c9e88401dedd266d5e08");
+		params.add("redirect_uri", "http://localhost:8000/auth/kakao/callback");
+		params.add("code", code);
+
+		// HttpHeader와 HttpBody를 하나의 객체에 담기
+		HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
+
+		// Http 요청하기 -> post방식으로 그리고 response 변수의 응답을 받는다. <= response에는 accesstoken의 값도
+		// 포함되서 받는다.
+		ResponseEntity<String> response = rt.exchange("https://kauth.kakao.com/oauth/token", HttpMethod.POST,
+				kakaoTokenRequest, String.class);
+
+		// response.getBody()나온 accestoken값을 OAuthToken객체를 생성해 해당 타입으로 매핑해서 받는다.
+		ObjectMapper objectMapper = new ObjectMapper();
+		OAuthToken oauthToken = null;
+		try {
+			oauthToken = objectMapper.readValue(response.getBody(), OAuthToken.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		RestTemplate rt2 = new RestTemplate();
+		HttpHeaders headers2 = new HttpHeaders();
+
+		headers2.add("Authorization", "Bearer " + oauthToken.getAccess_token());
+		headers2.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+		HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest2 = new HttpEntity<>(headers2);
+
+		ResponseEntity<String> response2 = rt2.exchange("https://kapi.kakao.com/v2/user/me", HttpMethod.POST,
+				kakaoProfileRequest2, String.class);
+
+		ObjectMapper objectMapper2 = new ObjectMapper();
+		KakaoProfile kakaoProfile = null;
+
+		try {
+			kakaoProfile = objectMapper2.readValue(response2.getBody(), KakaoProfile.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		// accesstoken으로 카카오src서버에서 나의 정보를 가져왔다.
+//		System.out.println("이메일 : " + kakaoProfile.getKakao_account().getEmail());
+//		System.out.println("아이디 : " + kakaoProfile.getId());
+//		System.out.println("닉네임 : " + kakaoProfile.getProperties().getNickname());
+
+		// 사이트에 카카오로부터 받은 정보를 우리 서버 회원 구성을 아래같이 한다.
+		System.out.println("블로그서버 유저이름 : " + kakaoProfile.getKakao_account().getEmail() + "_" + kakaoProfile.getId());
+		System.out.println("블로그서버 이메일 : " + kakaoProfile.getKakao_account().getEmail());
+		System.out.println("블로그서버 비밀번호 : " + cosKey);
+
+		User kakaoUser = new User();
+		kakaoUser.setUsername(kakaoProfile.getKakao_account().getEmail() + "_" + kakaoProfile.getId());
+		kakaoUser.setEmail(kakaoProfile.getKakao_account().getEmail());
+		kakaoUser.setPassword(cosKey);
+
+		// 이미 가입자 혹은 비가입지 체크해서 처리해야한다.
+		User originUser = userService.findByName(kakaoUser.getUsername());
+		if (originUser.getUsername() == null) {
+			System.out.println("기존 회원이 아닙니다.");
+			userService.save(kakaoUser);
+		}
+
+		// 로그인 처리 -> 세션 저장!!
+		Authentication authentication = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(kakaoUser.getUsername(), cosKey));
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		return "회원가입 및 로그인 처리 완료";
+	}
+
+}
